@@ -3,7 +3,6 @@
 #'
 #' @param num numeric
 #'
-#' @examples
 number_2_date <- function(num) {
   index <- ifelse(is.na(num[1]),num[10],num[1])
   stopifnot(is.numeric(index))
@@ -22,14 +21,12 @@ number_2_date <- function(num) {
 #'
 #' @param file
 #'
-#' @return
-#' @export jsonlite
-#'
 #' @examples
+#' \dontrun{
 #' write_csv(parse_json("data/3-1.json"),"data/parse-3-1.csv")
 #' write_csv(parse_json("data/3-2.json"),"data/parse-3-2.csv")
 #' write_csv(parse_json("data/3-3.json"),"data/parse-3-3.csv")
-#'
+#' }
 parse_json <- function(file) {
   tmp_json <- jsonlite::fromJSON(file)
   tmp_saT <- tmp_json$mT$saT
