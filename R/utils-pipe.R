@@ -5,6 +5,7 @@
 #' @name %>%
 #' @rdname pipe
 #' @export
+magrittr::`%>%`
 #' @importFrom magrittr %>%
 #' @usage lhs \%>\% rhs
 NULL
