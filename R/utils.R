@@ -31,6 +31,22 @@ open_file <- function(file_path) {
 
 
 
+#' Convert decimal to binary
+#'
+#' @param x decimal integer, eg 511
+#' @param pos number of position to show.
+#'
+#' @return binary char
+#' @export
+#'
+#' @examples
+#' int2bin(511)
+#' int2bin(12,4)
+int2bin <- function(x, pos = 9){
+  tmp <- paste(sapply(strsplit(paste(rev(intToBits(x))),""),`[[`,2),collapse="")
+  substr(tmp,32-pos +1,32)
+}
+
 
 
 # # Abandon
