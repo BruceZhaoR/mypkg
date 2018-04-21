@@ -36,34 +36,48 @@
 #' @export
 #' @import httr
 #' @import rvest
+#' @importFrom purrr map
 #'
 #' @examples
 #' get_sh_lj_price("华润外滩九里")
 #' get_sh_lj_price("万科城市花园")
-get_sh_lj_price <- function(house_name, index = 10) {
+get_sh_lj_price <- function(house_name, index =10) {
+  if (index > 30) {
+    warning("index must be less than 30")
+    index <- 30
+  }
   house_url <- modify_url("https://sh.lianjia.com",
                           path = paste0("ershoufang/rs",house_name))
 
-  agent <- user_agent("Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.97 Safari/537.36 Vivaldi/1.94.1008.40")
+  agent <- user_agent("Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/63.0.3239.84 Safari/537.36")
   accept <- accept("text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
   charset <- add_headers("Accept-Language"= "zh-CN,zh;q=0.9","Accept-Charset"="gb2312,utf-8;q=0.9,*;q=0.3")
 
-  r <- GET(house_url,agent,accept, charset)
-  tmp <- read_html(r)
+  tmp <- content(GET(house_url,agent,accept, charset), type = "text/html",encoding = "utf-8")
   stopifnot(any(class(tmp) == "xml_node"))
-  text <- tmp %>% html_nodes(css = "div.unitPrice") %>%
-    html_attr("data-price")
-  if (length(text) < 1) {
-    warning("Can't get the house price!")
-    number <- NA
+
+  house_ids <-  tmp %>%
+    html_nodes(css = "div.unitPrice") %>%
+    html_attr("data-rid") %>% .[seq_len(index)]
+  house_id <- names(rev(sort(table(house_ids)))[1])
+
+  house_id_url <- modify_url("https://sh.lianjia.com",
+                             path = paste0("xiaoqu/",house_id))
+  house_id_tmp <- content(GET(house_id_url, agent, accept,charset),type = "text/html",encoding = "utf-8")
+
+  nodes <- c("span.xiaoquUnitPrice","span.xiaoquInfoLabel","span.xiaoquInfoContent")
+
+  nodes_tmp <- map(nodes, function(x) html_text(html_nodes(house_id_tmp, x)))
+  if (NROW(nodes_tmp[[1]]) == 0) {
+    warning("Failed")
+    return(NA)
   } else {
-    if (length(text) > index) {
-      number <- text[seq_len(index)] %>% as.numeric()
-    } else {
-      number <- text %>% as.numeric()
-    }
+    data.frame(
+      info_label = c("id", "挂牌均价(元/m2)", nodes_tmp[[2]]),
+      info_content = c(house_id, nodes_tmp[[1]], nodes_tmp[[3]]),
+      stringsAsFactors = FALSE
+    )
   }
-  number
 }
 
 
