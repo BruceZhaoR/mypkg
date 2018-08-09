@@ -1,10 +1,10 @@
-#' Fill NA with the last no-NA value
+#' Fill NA with the last no-NA value generic.
 #'
-#'See more: [tidyselect::vars_select()].
+#' This method can apply to numeric vector, data.frame/tibble. grouped_df.
+#' If you want to apply to data.frame/tibble, please \code{library(dplyr)}.
 #'
-#' @param data a data.frame or a vector
+#' @param x a data.frame or a vector
 #' @param ... col names character vector or just bare name.
-#'
 #'
 #' @return data.frame or a vector
 #'
@@ -14,31 +14,65 @@
 #' xy <- data.frame(x,y)
 #' fill_na(x)
 #' fill_na(y)
+#' \dontrun{
 #' fill_na(xy, x, y)
 #' fill_na(xy, c("x","y"))
 #' fill_na(xy, starts_with("x"))
+#' }
+#'
 #'@export
-fill_na <- function(data, ...) {
+fill_na <- function(x, ...) {
   UseMethod("fill_na")
 }
 
-#'@export
-fill_na.default <- function(data, ...) {
-  stopifnot(is.vector(data))
-  a <- !is.na(data)
-  data[which(a)[c(1, seq_along(which(a)))][cumsum(a) + 1]]
-}
 
-#'@export
-fill_na.data.frame <- function(data, ...) {
-  fill_cols <- unname(tidyselect::vars_select(names(data), ...))
-  for (col in fill_cols) {
-    data[[col]] <- fill_na(data[[col]])
-  }
-  data
-}
-
+#' @inheritParams fill_na
 #' @export
-fill_na.grouped_df <- function(data, ...) {
-  dplyr::do(data, fill_na(., ...))
+#' @rdname fill_na
+fill_na.default <- function(x, ...) {
+  stopifnot(is.vector(x))
+  a <- !is.na(x)
+  x[which(a)[c(1, seq_along(which(a)))][cumsum(a) + 1]]
+}
+
+#' @inheritParams fill_na
+#' @export
+#' @rdname fill_na
+fill_na.tbl_df<- function(x, ...) {
+  if (requireNamespace("dplyr", quietly = TRUE)) {
+    fill_cols <- unname(tidyselect::vars_select(names(x), ...))
+    for (col in fill_cols) {
+      x[[col]] <- fill_na(x[[col]])
+    }
+    x
+  } else {
+    print("please library(dplyr) ")
+  }
+}
+
+#' @inheritParams fill_na
+#' @export
+#' @rdname fill_na
+fill_na.data.frame <- function(x, ...) {
+  if (requireNamespace("tidyselect", quietly = TRUE)) {
+    fill_cols <- unname(tidyselect::vars_select(names(x), ...))
+    for (col in fill_cols) {
+      x[[col]] <- fill_na(x[[col]])
+    }
+    x
+  } else {
+    print("please library(tidyselect) ")
+  }
+}
+
+#' @inheritParams fill_na
+#' @export
+#' @rdname fill_na
+fill_na.grouped_df <- function(x, ...) {
+  if (requireNamespace("dplyr", quietly = TRUE)) {
+    dplyr::do(x, fill_na(...))
+  } else {
+    print("please library(dplyr) ")
+  }
+
 }
